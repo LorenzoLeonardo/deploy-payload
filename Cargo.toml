@@ -1,0 +1,20 @@
+[package]
+name = "deploy-payload"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+tokio = { version = "1.28.0", features = ["full"] }
+async-curl = "0.1.6"
+curl = "0.4.44"
+anyhow = "1.0.71"
+http = "0.2.9"
+url = "2.3.1"
+env_logger = "0.10.0"
+log = "0.4.17"
+chrono = "0.4.24"
+thiserror = "1.0.40"
+directories = "5.0.1"
+winapi = "0.3.9"
