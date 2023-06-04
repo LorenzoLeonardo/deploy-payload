@@ -63,7 +63,7 @@ impl fmt::Display for DebugHttpRequest {
 ///
 /// Asynchronous HTTP client.
 ///
-pub async fn async_http_client(request: HttpRequest) -> Result<HttpResponse> {
+pub async fn download_file(request: HttpRequest) -> Result<HttpResponse> {
     log::debug!("{}", DebugHttpRequest::from(&request));
     let curl = AsyncCurl::new();
     let mut easy = Easy2::new(ResponseHandler::new());
